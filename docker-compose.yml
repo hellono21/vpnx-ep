@@ -1,0 +1,34 @@
+version: "2"
+services:
+  xtun-ep:
+    build: ./xtun-ep
+    privileged: true
+    environment:
+      - XTUN_PSK=xtun
+      - XTUN_NET=10.222.0.1/24
+    ports:
+      - 443:443/udp
+  udp2raw:
+    build: ./udp2raw/
+    image: udp2raw
+    privileged: true
+    links:
+      - xtun-ep:ep
+    environment:
+      - TUNNEL_HOST=ep
+      - TUNNEL_PORT=443
+    ports:
+      - 443:443/tcp
+  vpn:
+    image: hwdsl2/ipsec-vpn-server
+    restart: always
+    env_file:
+      - ./vpn.env
+    ports:
+      - "500:500/udp"
+      - "4500:4500/udp"
+    privileged: true
+    hostname: ipsec-vpn-server
+    container_name: ipsec-vpn-server
+    volumes:
+      - /lib/modules:/lib/modules:ro
